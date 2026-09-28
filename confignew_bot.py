@@ -15,9 +15,9 @@ import requests
 # ================== تنظیمات ==================
 # تو گیت‌هاب این‌ها از Secrets خونده می‌شن؛ برای تست روی سیستم خودت می‌تونی
 # مقدار پیش‌فرض (بعد از or) رو موقتاً پر کنی.
-TOKEN = os.environ.get("BOT_TOKEN") or "توکن_بات"
-CHANNEL = os.environ.get("BOT_CHANNEL") or "@confixon"
-SOURCE_URL = os.environ.get("BOT_SOURCE_URL") or "https://yamyamproxyy.github.io/Yamyamproxy/data/sub.txt"
+TOKEN = os.environ.get("BOT_TOKEN") or 
+CHANNEL = os.environ.get("CHANNEL_NAME") or 
+SOURCE_URL = os.environ.get("BOT_SOURCE_URL_P") or 
 
 TOTAL = 5                # تعداد کانفیگ در هر پیام
 EXCLUDE = {"🇮🇷"}         # کانفیگ‌های این پرچم‌ها هیچ‌وقت فرستاده نمی‌شن
