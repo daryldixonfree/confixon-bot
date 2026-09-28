@@ -1,0 +1,39 @@
+name: Config Bot
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # هر ۳۰ دقیقه
+  workflow_dispatch: {}       # اجرای دستی از تب Actions برای تست
+
+permissions:
+  contents: write            # برای ذخیره‌ی seen.json داخل مخزن
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          BOT_CHANNEL: ${{ secrets.BOT_CHANNEL }}
+          BOT_SOURCE_URL: ${{ secrets.BOT_SOURCE_URL }}
+        run: python config_bot.py
+
+      - name: Save seen.json
+        run: |
+          git config user.name "config-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add seen.json
+          git diff --cached --quiet || git commit -m "update seen.json"
+          git push
