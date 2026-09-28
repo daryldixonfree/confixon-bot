@@ -21,14 +21,21 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests "requests[socks]"
+
+      - name: Download xray-core
+        run: |
+          curl -fsSL -o xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
+          unzip -o xray.zip xray
+          chmod +x xray
 
       - name: Run bot
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          BOT_CHANNEL: ${{ secrets.BOT_CHANNEL }}
-          BOT_SOURCE_URL: ${{ secrets.BOT_SOURCE_URL }}
-        run: python confignew_bot.py
+          CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
+          BOT_SOURCE_URL_Y: ${{ secrets.BOT_SOURCE_URL_Y }}
+          BOT_SOURCE_URL_P: ${{ secrets.BOT_SOURCE_URL_P }}
+        run: python config_bot.py
 
       - name: Save seen.json
         run: |
