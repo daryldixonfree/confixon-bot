@@ -6,25 +6,29 @@ import os
 import random
 import re
 import socket
+import subprocess
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
-from urllib.parse import quote, unquote
+from urllib.parse import parse_qs, quote, unquote
 
 import requests
 
 # ================== تنظیمات ==================
-# تو گیت‌هاب این‌ها از Secrets خونده می‌شن؛ برای تست روی سیستم خودت می‌تونی
-# مقدار پیش‌فرض (بعد از or) رو موقتاً پر کنی.
-TOKEN = os.environ.get("BOT_TOKEN") or 
-CHANNEL = os.environ.get("CHANNEL_NAME") or 
-SOURCE_URL = os.environ.get("BOT_SOURCE_URL_P") or 
+TOKEN = os.environ.get("BOT_TOKEN")
+CHANNEL = os.environ.get("CHANNEL_NAME")
+SOURCE_URLS = [u for u in (os.environ.get("BOT_SOURCE_URL_Y"), os.environ.get("BOT_SOURCE_URL_P")) if u]
 
-TOTAL = 5                # تعداد کانفیگ در هر پیام
+TOTAL = 5
 EXCLUDE = {"🇮🇷"}         # کانفیگ‌های این پرچم‌ها هیچ‌وقت فرستاده نمی‌شن
 REBRAND = True            # آیدی کانال منبع تو اسم کانفیگ با CHANNEL عوض بشه
-PING_TEST = True          # قبل از ارسال چک بشه سرور واقعاً جواب می‌ده یا نه
+PING_TEST = True          # قبل از تست واقعی، اول فقط پورت رو چک کن (فیلتر اولیه‌ی سریع)
 PING_TIMEOUT = 5          # ثانیه، برای هر تلاش اتصال مستقیم
-USE_QUOTE = False         # True = نقل‌قول (ولی با یه تپ کپی نمی‌شه)
+XRAY_TEST = True          # تست واقعی با خود xray (اتصال واقعی، نه فقط باز بودن پورت)
+XRAY_BIN = "./xray"       # مسیر فایل اجرایی xray (تو ورک‌فلو دانلود می‌شه)
+XRAY_TIMEOUT = 8          # ثانیه، حداکثر انتظار برای جواب گرفتن از پشت کانفیگ
+XRAY_MAX_TEST = 40        # حداکثر چند کانفیگ رو با xray تست کنه (برای محدود کردن زمان اجرا)
+USE_QUOTE = False
 SEEN_FILE = "seen.json"
 MAX_SEEN = 500
 # ============================================
@@ -64,17 +68,23 @@ def h(cfg):
 
 
 def fetch_configs():
-    r = requests.get(SOURCE_URL, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
-    text = html.unescape(r.text)
-    found = CFG_RE.findall(text)
-    if not found:  # شاید ساب base64 باشه
+    for url in SOURCE_URLS:
         try:
-            raw = re.sub(r"\s+", "", text)
-            found = CFG_RE.findall(b64d(raw).decode("utf-8", "ignore"))
+            r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+            text = html.unescape(r.text)
+            found = CFG_RE.findall(text)
+            if not found:
+                try:
+                    raw = re.sub(r"\s+", "", text)
+                    found = CFG_RE.findall(b64d(raw).decode("utf-8", "ignore"))
+                except Exception:
+                    found = []
+            found = [c.strip() for c in found]
+            if found:
+                return list(dict.fromkeys(found))
         except Exception:
-            pass
-    found = [c.strip() for c in found]
-    return list(dict.fromkeys(found))  # حذف تکراری با حفظ ترتیب
+            continue
+    return []
 
 
 def get_flag(cfg):
@@ -103,7 +113,6 @@ def clean_label(label):
 
 
 def clean_config(cfg):
-    """اسم کانفیگ رو تمیز می‌کنه؛ خروجی بدون فاصله و بدون خط خالی."""
     if cfg.startswith("vmess://"):
         try:
             d = json.loads(b64d(cfg[8:]))
@@ -115,7 +124,6 @@ def clean_config(cfg):
     if "#" in cfg:
         body, label = cfg.split("#", 1)
         label = clean_label(unquote(label))
-        # فاصله‌ها به %20 تبدیل می‌شن تا کانفیگ یه تکه بمونه
         return body + ("#" + quote(label, safe="@:._-") if label else "")
     return cfg
 
@@ -131,7 +139,7 @@ def get_host_port(cfg):
             return None
     main = body.split("?", 1)[0]
     found = HP_RE.findall(main)
-    if not found and scheme == "ss":  # ss قدیمی: همه‌چیز داخل base64 هست
+    if not found and scheme == "ss":
         try:
             found = HP_RE.findall(b64d(main).decode("utf-8", "ignore"))
         except Exception:
@@ -160,14 +168,147 @@ def tcp_ping(cfg):
     return (time.time() - start) * 1000
 
 
+def _free_port():
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+def cfg_to_xray_outbound(cfg):
+    """کانفیگ رو به فرمت outbound خود xray تبدیل می‌کنه. اگه پروتکل یا نوع
+    شبکه‌ش پشتیبانی نشه (مثل ss یا xhttp/kcp)، None برمی‌گردونه، و اون‌وقت
+    فقط به همون تست پورت (tcp_ping) بسنده می‌کنیم."""
+    scheme, rest = cfg.split("://", 1)
+    body = rest.split("#", 1)[0]
+
+    if scheme == "vmess":
+        try:
+            d = json.loads(b64d(body))
+        except Exception:
+            return None
+        net = d.get("net", "tcp")
+        stream = {"network": net}
+        if net == "ws":
+            stream["wsSettings"] = {"path": d.get("path") or "/",
+                                     "headers": {"Host": d.get("host") or d.get("add")}}
+        elif net == "grpc":
+            stream["grpcSettings"] = {"serviceName": d.get("path") or ""}
+        elif net != "tcp":
+            return None
+        if str(d.get("tls", "")).lower() == "tls":
+            stream["security"] = "tls"
+            stream["tlsSettings"] = {"serverName": d.get("sni") or d.get("host") or d.get("add"),
+                                      "allowInsecure": True}
+        try:
+            return {
+                "protocol": "vmess",
+                "settings": {"vnext": [{"address": d["add"], "port": int(d["port"]), "users": [
+                    {"id": d["id"], "alterId": int(d.get("aid") or 0), "security": d.get("scy") or "auto"}
+                ]}]},
+                "streamSettings": stream,
+            }
+        except Exception:
+            return None
+
+    if scheme not in ("vless", "trojan"):
+        return None  # ss و بقیه فعلاً پشتیبانی نمی‌شن
+
+    try:
+        userinfo, hostpart = body.split("@", 1)
+        main, _, query_str = hostpart.partition("?")
+        host, port = main.rsplit(":", 1)
+        host = host.strip("[]")
+        port = int(port)
+    except Exception:
+        return None
+    q = {k: v[0] for k, v in parse_qs(query_str).items()}
+
+    net = q.get("type", "tcp")
+    stream = {"network": net}
+    if net == "ws":
+        stream["wsSettings"] = {"path": q.get("path") or "/", "headers": {"Host": q.get("host") or ""}}
+    elif net == "grpc":
+        stream["grpcSettings"] = {"serviceName": q.get("serviceName") or q.get("path") or ""}
+    elif net != "tcp":
+        return None  # xhttp/kcp/quic فعلاً پشتیبانی نمی‌شن
+
+    security = q.get("security", "none")
+    if security == "tls":
+        stream["security"] = "tls"
+        stream["tlsSettings"] = {"serverName": q.get("sni") or "", "allowInsecure": True,
+                                  "fingerprint": q.get("fp") or "chrome"}
+    elif security == "reality":
+        stream["security"] = "reality"
+        stream["realitySettings"] = {"serverName": q.get("sni") or "", "publicKey": q.get("pbk") or "",
+                                      "shortId": q.get("sid") or "", "fingerprint": q.get("fp") or "chrome"}
+    elif security != "none":
+        return None
+
+    if scheme == "vless":
+        user = {"id": userinfo, "encryption": q.get("encryption") or "none"}
+        if q.get("flow"):
+            user["flow"] = q["flow"]
+        return {"protocol": "vless",
+                "settings": {"vnext": [{"address": host, "port": port, "users": [user]}]},
+                "streamSettings": stream}
+    return {"protocol": "trojan",
+            "settings": {"servers": [{"address": host, "port": port, "password": userinfo}]},
+            "streamSettings": stream}
+
+
+def xray_alive(cfg):
+    """True اگه xray واقعاً بتونه از پشت این کانفیگ یه سایت رو باز کنه.
+    None اگه پروتکلش پشتیبانی نشه (تا با تست پورت جایگزینش کنیم)."""
+    outbound = cfg_to_xray_outbound(cfg)
+    if outbound is None:
+        return None
+    port = _free_port()
+    xray_cfg = {
+        "log": {"loglevel": "none"},
+        "inbounds": [{"listen": "127.0.0.1", "port": port, "protocol": "socks",
+                       "settings": {"udp": False}}],
+        "outbounds": [outbound],
+    }
+    fd, path = tempfile.mkstemp(suffix=".json")
+    proc = None
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(xray_cfg, f)
+        proc = subprocess.Popen([XRAY_BIN, "run", "-c", path],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(0.7)  # فرصت بالا اومدن xray
+        if proc.poll() is not None:
+            return False  # خود xray بالا نیومد (کانفیگ نامعتبره)
+        r = requests.get(
+            "http://cp.cloudflare.com/generate_204",
+            proxies={"http": f"socks5h://127.0.0.1:{port}", "https": f"socks5h://127.0.0.1:{port}"},
+            timeout=XRAY_TIMEOUT,
+        )
+        return r.status_code in (200, 204)
+    except Exception:
+        return False
+    finally:
+        if proc:
+            proc.terminate()
+            try:
+                proc.wait(timeout=3)
+            except Exception:
+                proc.kill()
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
 def pick(configs, seen):
     seen_set = set(seen)
     configs = [c for c in configs if get_flag(c) not in EXCLUDE]
     # اول کانفیگ‌های نفرستاده‌شده، بعد بقیه؛ داخل هر دسته تصادفی
     ordered = sorted(configs, key=lambda c: (h(c) in seen_set, random.random()))
 
-    def alive(cands):
-        """فقط کانفیگ‌های زنده (به همون ترتیب). پینگ‌ها هم‌زمان گرفته می‌شن."""
+    def port_alive(cands):
         if not PING_TEST:
             return list(cands)
 
@@ -182,10 +323,23 @@ def pick(configs, seen):
         return [c for c, p in zip(cands, results) if p is not None]
 
     chosen = []
+    xray_tested = 0
     rest = ordered
     while len(chosen) < TOTAL and rest:
         chunk, rest = rest[:20], rest[20:]
-        chosen += alive(chunk)
+        for c in port_alive(chunk):
+            if len(chosen) >= TOTAL:
+                break
+            if not XRAY_TEST or xray_tested >= XRAY_MAX_TEST:
+                chosen.append(c)
+                continue
+            xray_tested += 1
+            try:
+                result = xray_alive(c)
+            except Exception:
+                result = False
+            if result is not False:  # True یا None (پروتکل پشتیبانی‌نشده) قبول می‌شه
+                chosen.append(c)
     return chosen[:TOTAL]
 
 
@@ -199,7 +353,7 @@ def build_message(chosen):
         msg = f"🔐 کانفیگ‌های جدید\n\n{box}\n\n{CHANNEL}"
         if len(msg) <= 4000 or len(chosen) <= 1:
             return msg
-        chosen = chosen[:-1]  # اگه از حد تلگرام بیشتر شد، آخری رو بردار
+        chosen = chosen[:-1]
 
 
 def send(msg):
