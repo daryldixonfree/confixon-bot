@@ -28,7 +28,7 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           BOT_CHANNEL: ${{ secrets.BOT_CHANNEL }}
           BOT_SOURCE_URL: ${{ secrets.BOT_SOURCE_URL }}
-        run: python config_bot.py
+        run: python confignew_bot.py
 
       - name: Save seen.json
         run: |
