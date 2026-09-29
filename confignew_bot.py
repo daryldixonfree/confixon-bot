@@ -318,7 +318,7 @@ def xray_alive(cfg):
         time.sleep(0.7)  # فرصت بالا اومدن xray
         if proc.poll() is not None:
             if DEBUG:
-                print(f"[دیباگ] {tag}: خود xray بالا نیومد -> {proc.stdout.read()[:300]}")
+                print(f"[دیباگ] {tag}: خود xray بالا نیومد -> {proc.stdout.read()[:1500]}")
             return False
         r = requests.get(
             XRAY_TEST_URL,
