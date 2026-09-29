@@ -235,8 +235,7 @@ def cfg_to_xray_outbound(cfg):
             return None
         if str(d.get("tls", "")).lower() == "tls":
             stream["security"] = "tls"
-            stream["tlsSettings"] = {"serverName": d.get("sni") or d.get("host") or d.get("add"),
-                                      "allowInsecure": True}
+            stream["tlsSettings"] = {"serverName": d.get("sni") or d.get("host") or d.get("add")}
         try:
             return {
                 "protocol": "vmess",
@@ -273,7 +272,7 @@ def cfg_to_xray_outbound(cfg):
     security = q.get("security", "none")
     if security == "tls":
         stream["security"] = "tls"
-        stream["tlsSettings"] = {"serverName": q.get("sni") or "", "allowInsecure": True,
+        stream["tlsSettings"] = {"serverName": q.get("sni") or "",
                                   "fingerprint": q.get("fp") or "chrome"}
     elif security == "reality":
         stream["security"] = "reality"
