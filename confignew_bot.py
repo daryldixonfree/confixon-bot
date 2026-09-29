@@ -22,12 +22,15 @@ SOURCE_URLS = [u for u in (os.environ.get("BOT_SOURCE_URL_Y"), os.environ.get("B
 TOTAL = 5
 EXCLUDE = {"🇮🇷"}         # کانفیگ‌های این پرچم‌ها هیچ‌وقت فرستاده نمی‌شن
 REBRAND = True            # آیدی کانال منبع تو اسم کانفیگ با CHANNEL عوض بشه
-PING_TEST = True          # قبل از تست واقعی، اول فقط پورت رو چک کن (فیلتر اولیه‌ی سریع)
-PING_TIMEOUT = 5          # ثانیه، برای هر تلاش اتصال مستقیم
+PING_TEST = True          # لایه‌ی اول: از داخل ایران چک بشه پورت سرور باز هست یا نه (check-host.net)
+PING_NODES = ["ir1.node.check-host.net", "ir3.node.check-host.net", "ir6.node.check-host.net"]
+PING_MIN_OK = 2           # حداقل چندتا از نودهای ایران باید وصل بشن
+PING_TIMEOUT = 15         # ثانیه، حداکثر انتظار برای نتیجه‌ی هر تست
 XRAY_TEST = True          # تست واقعی با خود xray (اتصال واقعی، نه فقط باز بودن پورت)
 XRAY_BIN = "./xray"       # مسیر فایل اجرایی xray (تو ورک‌فلو دانلود می‌شه)
 XRAY_TIMEOUT = 8          # ثانیه، حداکثر انتظار برای جواب گرفتن از پشت کانفیگ
 XRAY_TEST_URL = "https://web.telegram.org/"
+DEBUG = True              # جزئیات هر تست تو لاگ Actions چاپ بشه (بعد از رفع مشکل، False کن)
 XRAY_MAX_TEST = 40        # حداکثر چند کانفیگ رو با xray تست کنه (برای محدود کردن زمان اجرا)
 USE_QUOTE = False
 SEEN_FILE = "seen.json"
@@ -152,21 +155,53 @@ def get_host_port(cfg):
 
 
 def tcp_ping(cfg):
-    """میلی‌ثانیه اگه سرور جواب بده، وگرنه None. اتصال مستقیمه چون
-    رانر گیت‌هاب محدودیت شبکه‌ی PythonAnywhere رو نداره. پروتکل‌های
-    UDP قابل تست نیستن و بدون تست قبول می‌شن."""
+    """True اگه از حداقل PING_MIN_OK تا از نودهای ایرانی check-host.net
+    بشه به پورت سرور وصل شد؛ این چیزیه که مرحله‌ی گیت‌هاب-به-خودش نمی‌تونه
+    نشون بده، چون فیلترینگ ایران رو خود گیت‌هاب حس نمی‌کنه.
+    پروتکل‌های UDP قابل تست نیستن و بدون تست قبول می‌شن."""
     if UDP_RE.search(cfg):
-        return 0.0
+        return True
     hp = get_host_port(cfg)
     if not hp:
-        return None
-    start = time.time()
+        return False
+    host, port = hp
     try:
-        with socket.create_connection(hp, timeout=PING_TIMEOUT):
-            pass
-    except OSError:
-        return None
-    return (time.time() - start) * 1000
+        r = requests.get(
+            "https://check-host.net/check-tcp",
+            params={"host": f"{host}:{port}", "node": PING_NODES},
+            headers={"Accept": "application/json"},
+            timeout=10,
+        )
+        req_id = r.json().get("request_id")
+        if not req_id:
+            return False
+    except Exception:
+        return False
+
+    deadline = time.time() + PING_TIMEOUT
+    while time.time() < deadline:
+        time.sleep(1.5)
+        try:
+            res = requests.get(
+                f"https://check-host.net/check-result/{req_id}",
+                headers={"Accept": "application/json"},
+                timeout=10,
+            ).json()
+        except Exception:
+            continue
+        ok_count = 0
+        pending = False
+        for node_result in res.values():
+            if not node_result:
+                pending = True
+                continue
+            if any(isinstance(e, dict) and "time" in e for e in node_result):
+                ok_count += 1
+        if ok_count >= PING_MIN_OK:
+            return True
+        if not pending:
+            return False
+    return False
 
 
 def _free_port():
@@ -265,9 +300,10 @@ def xray_alive(cfg):
     outbound = cfg_to_xray_outbound(cfg)
     if outbound is None:
         return None
+    tag = get_host_port(cfg)
     port = _free_port()
     xray_cfg = {
-        "log": {"loglevel": "none"},
+        "log": {"loglevel": "warning"},
         "inbounds": [{"listen": "127.0.0.1", "port": port, "protocol": "socks",
                        "settings": {"udp": False}}],
         "outbounds": [outbound],
@@ -278,17 +314,23 @@ def xray_alive(cfg):
         with os.fdopen(fd, "w") as f:
             json.dump(xray_cfg, f)
         proc = subprocess.Popen([XRAY_BIN, "run", "-c", path],
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         time.sleep(0.7)  # فرصت بالا اومدن xray
         if proc.poll() is not None:
-            return False  # خود xray بالا نیومد (کانفیگ نامعتبره)
+            if DEBUG:
+                print(f"[دیباگ] {tag}: خود xray بالا نیومد -> {proc.stdout.read()[:300]}")
+            return False
         r = requests.get(
             XRAY_TEST_URL,
             proxies={"http": f"socks5h://127.0.0.1:{port}", "https": f"socks5h://127.0.0.1:{port}"},
             timeout=XRAY_TIMEOUT,
         )
+        if DEBUG:
+            print(f"[دیباگ] {tag}: کد جواب = {r.status_code}")
         return r.status_code < 400
-    except Exception:
+    except Exception as e:
+        if DEBUG:
+            print(f"[دیباگ] {tag}: خطا -> {type(e).__name__}: {e}")
         return False
     finally:
         if proc:
@@ -317,11 +359,11 @@ def pick(configs, seen):
             try:
                 return tcp_ping(c)
             except Exception:
-                return None
+                return False
 
         with ThreadPoolExecutor(max_workers=32) as ex:
             results = list(ex.map(safe_ping, cands))
-        return [c for c, p in zip(cands, results) if p is not None]
+        return [c for c, p in zip(cands, results) if p]
 
     chosen = []
     xray_tested = 0
