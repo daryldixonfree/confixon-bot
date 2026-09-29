@@ -27,6 +27,7 @@ PING_TIMEOUT = 5          # ثانیه، برای هر تلاش اتصال مس�
 XRAY_TEST = True          # تست واقعی با خود xray (اتصال واقعی، نه فقط باز بودن پورت)
 XRAY_BIN = "./xray"       # مسیر فایل اجرایی xray (تو ورک‌فلو دانلود می‌شه)
 XRAY_TIMEOUT = 8          # ثانیه، حداکثر انتظار برای جواب گرفتن از پشت کانفیگ
+XRAY_TEST_URL = "https://web.telegram.org/"
 XRAY_MAX_TEST = 40        # حداکثر چند کانفیگ رو با xray تست کنه (برای محدود کردن زمان اجرا)
 USE_QUOTE = False
 SEEN_FILE = "seen.json"
@@ -282,11 +283,11 @@ def xray_alive(cfg):
         if proc.poll() is not None:
             return False  # خود xray بالا نیومد (کانفیگ نامعتبره)
         r = requests.get(
-            "http://cp.cloudflare.com/generate_204",
+            XRAY_TEST_URL,
             proxies={"http": f"socks5h://127.0.0.1:{port}", "https": f"socks5h://127.0.0.1:{port}"},
             timeout=XRAY_TIMEOUT,
         )
-        return r.status_code in (200, 204)
+        return r.status_code < 400
     except Exception:
         return False
     finally:
