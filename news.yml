@@ -1,0 +1,39 @@
+name: News Bot
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"   # روزی ۶ بار
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  run-news-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run news bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          NEWS_CHANNEL_NAME: ${{ secrets.NEWS_CHANNEL_NAME }}
+          CODECRAFT_API_KEY: ${{ secrets.CODECRAFT_API_KEY }}
+        run: python news/news_bot.py
+
+      - name: Save seen_news.json
+        run: |
+          git config user.name "news-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add news/seen_news.json
+          git diff --cached --quiet || git commit -m "update seen_news.json"
+          git push
