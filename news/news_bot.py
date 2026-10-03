@@ -88,13 +88,21 @@ def ai_rewrite(item):
             json={"model": AI_MODEL, "messages": [{"role": "user", "content": prompt}]},
             timeout=30,
         )
+    except Exception as e:
+        print(f"[دیباگ] خطا تو اتصال به AI: {type(e).__name__}: {e}")
+        return None
+    try:
         data = r.json()
-        if "choices" not in data:
-            print(f"[دیباگ] جواب غیرمنتظره از AI (کد {r.status_code}): {data}")
-            return None
+    except Exception:
+        print(f"[دیباگ] جواب AI اصلاً JSON نیست (کد {r.status_code}): {r.text[:300]!r}")
+        return None
+    if "choices" not in data:
+        print(f"[دیباگ] جواب غیرمنتظره از AI (کد {r.status_code}): {data}")
+        return None
+    try:
         text = data["choices"][0]["message"]["content"].strip()
     except Exception as e:
-        print(f"[دیباگ] خطا تو تماس با AI: {type(e).__name__}: {e}")
+        print(f"[دیباگ] ساختار جواب AI عجیبه: {type(e).__name__}: {data}")
         return None
     if text.upper().startswith("SKIP"):
         print(f"[دیباگ] AI این خبر رو رد کرد: {item['title']}")
