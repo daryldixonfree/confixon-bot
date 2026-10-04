@@ -84,7 +84,19 @@ def ai_rewrite(item):
     try:
         r = requests.post(
             f"{AI_BASE_URL}/chat/completions",
-            headers={"Authorization": f"Bearer {AI_API_KEY}"},
+            headers={
+                "Authorization": f"Bearer {AI_API_KEY}",
+                "Content-Type": "application/json",
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/129.0.0.0 Safari/537.36"
+                ),
+                "Accept": "application/json",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Origin": "https://codecraftapi.com",
+                "Referer": "https://codecraftapi.com/",
+            },
             json={"model": AI_MODEL, "messages": [{"role": "user", "content": prompt}]},
             timeout=30,
         )
@@ -94,7 +106,13 @@ def ai_rewrite(item):
     try:
         data = r.json()
     except Exception:
-        print(f"[دیباگ] جواب AI اصلاً JSON نیست (کد {r.status_code}): {r.text[:300]!r}")
+        if "Just a moment" in r.text or "cf-browser-verification" in r.text:
+            print(
+                f"[دیباگ] درخواست توسط Cloudflare بلاک شد (کد {r.status_code}). "
+                "این یعنی سایت codecraftapi.com، آی‌پی سرورهای GitHub Actions رو مسدود کرده."
+            )
+        else:
+            print(f"[دیباگ] جواب AI اصلاً JSON نیست (کد {r.status_code}): {r.text[:300]!r}")
         return None
     if "choices" not in data:
         print(f"[دیباگ] جواب غیرمنتظره از AI (کد {r.status_code}): {data}")
