@@ -81,6 +81,12 @@ def ai_rewrite(item):
         f"بود، فقط دقیقاً کلمه‌ی SKIP رو بنویس و چیز دیگه‌ای ننویس.\n\n"
         f"عنوان: {item['title']}\nخلاصه: {item['desc']}"
     )
+    if not AI_API_KEY:
+        print(
+            "[دیباگ] GEMINI_API_KEY خالیه! یعنی یا Secret رو تو گیت‌هاب نساختید، "
+            "یا تو فایل news.yml اسمش درست نوشته نشده."
+        )
+        return None
     try:
         r = requests.post(
             AI_URL,
