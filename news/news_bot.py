@@ -9,9 +9,9 @@ import requests
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHANNEL = os.environ.get("NEWS_CHANNEL_NAME")
-AI_API_KEY = os.environ.get("CODECRAFT_API_KEY")
-AI_BASE_URL = "https://codecraftapi.com/v1"
-AI_MODEL = os.environ.get("CODECRAFT_MODEL") or "deepseek-v4-flash-0731"
+AI_API_KEY = os.environ.get("GEMINI_API_KEY")
+AI_MODEL = os.environ.get("GEMINI_MODEL") or "gemini-2.0-flash"
+AI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{AI_MODEL}:generateContent"
 
 # فقط منابع غیرسیاسی: تکنولوژی، علم، فضا، اخبار عجیب
 FEEDS = [
@@ -83,21 +83,9 @@ def ai_rewrite(item):
     )
     try:
         r = requests.post(
-            f"{AI_BASE_URL}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {AI_API_KEY}",
-                "Content-Type": "application/json",
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/129.0.0.0 Safari/537.36"
-                ),
-                "Accept": "application/json",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Origin": "https://codecraftapi.com",
-                "Referer": "https://codecraftapi.com/",
-            },
-            json={"model": AI_MODEL, "messages": [{"role": "user", "content": prompt}]},
+            AI_URL,
+            params={"key": AI_API_KEY},
+            json={"contents": [{"parts": [{"text": prompt}]}]},
             timeout=30,
         )
     except Exception as e:
@@ -106,21 +94,17 @@ def ai_rewrite(item):
     try:
         data = r.json()
     except Exception:
-        if "Just a moment" in r.text or "cf-browser-verification" in r.text:
-            print(
-                f"[دیباگ] درخواست توسط Cloudflare بلاک شد (کد {r.status_code}). "
-                "این یعنی سایت codecraftapi.com، آی‌پی سرورهای GitHub Actions رو مسدود کرده."
-            )
-        else:
-            print(f"[دیباگ] جواب AI اصلاً JSON نیست (کد {r.status_code}): {r.text[:300]!r}")
+        print(f"[دیباگ] جواب AI اصلاً JSON نیست (کد {r.status_code}): {r.text[:300]!r}")
         return None
-    if "choices" not in data:
-        print(f"[دیباگ] جواب غیرمنتظره از AI (کد {r.status_code}): {data}")
+    if "error" in data:
+        print(f"[دیباگ] خطای API جمینای (کد {r.status_code}): {data['error']}")
         return None
     try:
-        text = data["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"[دیباگ] ساختار جواب AI عجیبه: {type(e).__name__}: {data}")
+        candidate = data["candidates"][0]
+        text = candidate["content"]["parts"][0]["text"].strip()
+    except Exception:
+        reason = data.get("candidates", [{}])[0].get("finishReason") if data.get("candidates") else None
+        print(f"[دیباگ] ساختار جواب AI عجیبه یا خبر بلاک شد (finishReason={reason}): {data}")
         return None
     if text.upper().startswith("SKIP"):
         print(f"[دیباگ] AI این خبر رو رد کرد: {item['title']}")
