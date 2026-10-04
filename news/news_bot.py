@@ -10,7 +10,7 @@ import requests
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHANNEL = os.environ.get("NEWS_CHANNEL_NAME")
 AI_API_KEY = os.environ.get("GEMINI_API_KEY")
-AI_MODEL = os.environ.get("GEMINI_MODEL") or "gemini-2.0-flash"
+AI_MODEL = os.environ.get("GEMINI_MODEL") or "gemini-3.8-flash"
 AI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{AI_MODEL}:generateContent"
 
 # فقط منابع غیرسیاسی: تکنولوژی، علم، فضا، اخبار عجیب
