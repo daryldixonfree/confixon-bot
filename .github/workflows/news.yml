@@ -27,7 +27,7 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           NEWS_CHANNEL_NAME: ${{ secrets.NEWS_CHANNEL_NAME }}
-          CODECRAFT_API_KEY: ${{ secrets.CODECRAFT_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python news/news_bot.py
 
       - name: Save seen_news.json
