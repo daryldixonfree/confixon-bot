@@ -1,0 +1,38 @@
+name: Scrape Telegram Configs
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"   # اجرا هر ۳ ساعت یک‌بار
+  workflow_dispatch: {}     # امکان اجرای دستی از تب Actions
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Scraper
+        env:
+          CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
+          TELEGRAM_CHANNELS: ${{ secrets.TELEGRAM_CHANNELS }}
+        run: python scraper.py
+
+      - name: Commit and Push configs.txt
+        run: |
+          git config user.name "config-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add configs.txt
+          git diff --cached --quiet || git commit -m "update configs.txt"
+          git push
