@@ -16,18 +16,20 @@ import requests
 
 # ================== تنظیمات ==================
 TOKEN = os.environ.get("BOT_TOKEN")
-CHANNEL = os.environ.get("CHANNEL_NAME")
+CHANNEL = os.environ.get("CHANNEL_NAME", "@confixon")
 
-# لیست کانال‌های منبع تلگرام (بدون @)
-# می‌توانی مستقیماً در این لیست اضافه کنی یا از سکرت TELEGRAM_CHANNELS به صورت جدا شده با کاما بفرستی
 ENV_CHANNELS = os.environ.get("TELEGRAM_CHANNELS", "")
 if ENV_CHANNELS:
     SOURCE_CHANNELS = [c.strip().lstrip("@") for c in ENV_CHANNELS.split(",") if c.strip()]
 else:
     SOURCE_CHANNELS = [
-        "v2rayngvpn",
-        "customv2ray",
-        "free4allVPN",
+        "simchin_ir",
+        "filembad",
+        "capoit",
+        "etehadvpn",
+        "nufilter",
+        "hddify",
+        "confihub",
     ]
 
 TOTAL = 5
@@ -36,16 +38,17 @@ REBRAND = True
 PING_TEST = True
 PING_NODES = ["ir1.node.check-host.net", "ir3.node.check-host.net", "ir6.node.check-host.net"]
 PING_MIN_OK = 2
-PING_TIMEOUT = 12
+PING_TIMEOUT = 15
 XRAY_TEST = True
 XRAY_BIN = "./xray"
 XRAY_TIMEOUT = 8
 XRAY_TEST_URL = "https://web.telegram.org/"
 DEBUG = True
-XRAY_MAX_TEST = 35
+XRAY_MAX_TEST = 40
 USE_QUOTE = False
 SEEN_FILE = "seen.json"
-MAX_SEEN = 600
+STATE_FILE = "last_post.json"
+MAX_SEEN = 500
 # ============================================
 
 CFG_RE = re.compile(r"\b(?:vmess|vless|trojan|ss|hysteria2|hy2|tuic)://[^\r\n<>\"'\s]+")
@@ -67,43 +70,56 @@ def b64d(s):
 def load_seen():
     if os.path.exists(SEEN_FILE):
         try:
-            return json.load(open(SEEN_FILE))
+            with open(SEEN_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
         except Exception:
             pass
     return []
 
 
 def save_seen(seen):
-    json.dump(seen[-MAX_SEEN:], open(SEEN_FILE, "w"))
+    with open(SEEN_FILE, "w", encoding="utf-8") as f:
+        json.dump(seen[-MAX_SEEN:], f)
+
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def save_state(state):
+    with open(STATE_FILE, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
 
 
 def h(cfg):
-    return hashlib.md5(cfg.encode()).hexdigest()
+    body = cfg.split("#", 1)[0]
+    return hashlib.md5(body.encode()).hexdigest()
 
 
-def fetch_telegram_channels():
-    found_configs = []
+def fetch_configs():
+    found_all = []
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-
     for ch in SOURCE_CHANNELS:
         url = f"https://t.me/s/{ch}"
         try:
-            r = requests.get(url, headers=headers, timeout=15)
+            r = requests.get(url, timeout=20, headers=headers)
             if not r.ok:
                 continue
             text = html.unescape(r.text)
-            matches = CFG_RE.findall(text)
-            for m in matches:
-                clean_m = m.strip()
-                if clean_m:
-                    found_configs.append(clean_m)
+            found = [c.strip() for c in CFG_RE.findall(text) if c.strip()]
+            found.reverse()  # جدیدترین پیام‌های کانال در اولویت قرار بگیرند
+            found_all.extend(found)
         except Exception as e:
             if DEBUG:
-                print(f"[خطا در کانال {ch}]: {e}")
+                print(f"[دیباگ] خطا در دریافت کانال {ch}: {e}")
             continue
-
-    # حذف تکراری‌ها در حین حفظ ترتیب جدیدترین‌ها
-    return list(dict.fromkeys(found_configs))
+    return list(dict.fromkeys(found_all))
 
 
 def get_flag(cfg):
@@ -142,7 +158,7 @@ def clean_config(cfg):
         body, label = cfg.split("#", 1)
         label = clean_label(unquote(label))
         return body + ("#" + quote(label, safe="@:._-") if label else "")
-    return cfg
+    return f"{cfg}#{quote(CHANNEL, safe='@:._-')}"
 
 
 def get_host_port(cfg):
@@ -233,8 +249,10 @@ def cfg_to_xray_outbound(cfg):
         net = d.get("net", "tcp")
         stream = {"network": net}
         if net == "ws":
-            stream["wsSettings"] = {"path": d.get("path") or "/",
-                                     "headers": {"Host": d.get("host") or d.get("add")}}
+            stream["wsSettings"] = {
+                "path": d.get("path") or "/",
+                "headers": {"Host": d.get("host") or d.get("add")},
+            }
         elif net == "grpc":
             stream["grpcSettings"] = {"serviceName": d.get("path") or ""}
         elif net != "tcp":
@@ -245,9 +263,21 @@ def cfg_to_xray_outbound(cfg):
         try:
             return {
                 "protocol": "vmess",
-                "settings": {"vnext": [{"address": d["add"], "port": int(d["port"]), "users": [
-                    {"id": d["id"], "alterId": int(d.get("aid") or 0), "security": d.get("scy") or "auto"}
-                ]}]},
+                "settings": {
+                    "vnext": [
+                        {
+                            "address": d["add"],
+                            "port": int(d["port"]),
+                            "users": [
+                                {
+                                    "id": d["id"],
+                                    "alterId": int(d.get("aid") or 0),
+                                    "security": d.get("scy") or "auto",
+                                }
+                            ],
+                        }
+                    ]
+                },
                 "streamSettings": stream,
             }
         except Exception:
@@ -269,7 +299,10 @@ def cfg_to_xray_outbound(cfg):
     net = q.get("type", "tcp")
     stream = {"network": net}
     if net == "ws":
-        stream["wsSettings"] = {"path": q.get("path") or "/", "headers": {"Host": q.get("host") or ""}}
+        stream["wsSettings"] = {
+            "path": q.get("path") or "/",
+            "headers": {"Host": q.get("host") or ""},
+        }
     elif net == "grpc":
         stream["grpcSettings"] = {"serviceName": q.get("serviceName") or q.get("path") or ""}
     elif net != "tcp":
@@ -278,12 +311,18 @@ def cfg_to_xray_outbound(cfg):
     security = q.get("security", "none")
     if security == "tls":
         stream["security"] = "tls"
-        stream["tlsSettings"] = {"serverName": q.get("sni") or "",
-                                  "fingerprint": q.get("fp") or "chrome"}
+        stream["tlsSettings"] = {
+            "serverName": q.get("sni") or "",
+            "fingerprint": q.get("fp") or "chrome",
+        }
     elif security == "reality":
         stream["security"] = "reality"
-        stream["realitySettings"] = {"serverName": q.get("sni") or "", "publicKey": q.get("pbk") or "",
-                                      "shortId": q.get("sid") or "", "fingerprint": q.get("fp") or "chrome"}
+        stream["realitySettings"] = {
+            "serverName": q.get("sni") or "",
+            "publicKey": q.get("pbk") or "",
+            "shortId": q.get("sid") or "",
+            "fingerprint": q.get("fp") or "chrome",
+        }
     elif security != "none":
         return None
 
@@ -291,12 +330,16 @@ def cfg_to_xray_outbound(cfg):
         user = {"id": userinfo, "encryption": q.get("encryption") or "none"}
         if q.get("flow"):
             user["flow"] = q["flow"]
-        return {"protocol": "vless",
-                "settings": {"vnext": [{"address": host, "port": port, "users": [user]}]},
-                "streamSettings": stream}
-    return {"protocol": "trojan",
-            "settings": {"servers": [{"address": host, "port": port, "password": userinfo}]},
-            "streamSettings": stream}
+        return {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": host, "port": port, "users": [user]}]},
+            "streamSettings": stream,
+        }
+    return {
+        "protocol": "trojan",
+        "settings": {"servers": [{"address": host, "port": port, "password": userinfo}]},
+        "streamSettings": stream,
+    }
 
 
 def xray_alive(cfg):
@@ -307,8 +350,14 @@ def xray_alive(cfg):
     port = _free_port()
     xray_cfg = {
         "log": {"loglevel": "warning"},
-        "inbounds": [{"listen": "127.0.0.1", "port": port, "protocol": "socks",
-                       "settings": {"udp": False}}],
+        "inbounds": [
+            {
+                "listen": "127.0.0.1",
+                "port": port,
+                "protocol": "socks",
+                "settings": {"udp": False},
+            }
+        ],
         "outbounds": [outbound],
     }
     fd, path = tempfile.mkstemp(suffix=".json")
@@ -316,18 +365,28 @@ def xray_alive(cfg):
     try:
         with os.fdopen(fd, "w") as f:
             json.dump(xray_cfg, f)
-        proc = subprocess.Popen([XRAY_BIN, "run", "-c", path],
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        proc = subprocess.Popen(
+            [XRAY_BIN, "run", "-c", path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
         time.sleep(0.7)
         if proc.poll() is not None:
+            if DEBUG:
+                print(f"[دیباگ] {tag}: خود xray بالا نیومد -> {proc.stdout.read()[:1500]}")
             return False
         r = requests.get(
             XRAY_TEST_URL,
             proxies={"http": f"socks5h://127.0.0.1:{port}", "https": f"socks5h://127.0.0.1:{port}"},
             timeout=XRAY_TIMEOUT,
         )
+        if DEBUG:
+            print(f"[دیباگ] {tag}: کد جواب = {r.status_code}")
         return r.status_code < 400
     except Exception as e:
+        if DEBUG:
+            print(f"[دیباگ] {tag}: خطا -> {type(e).__name__}: {e}")
         return False
     finally:
         if proc:
@@ -340,6 +399,16 @@ def xray_alive(cfg):
             os.remove(path)
         except OSError:
             pass
+
+
+def is_full_alive(cfg):
+    if PING_TEST and not tcp_ping(cfg):
+        return False
+    if XRAY_TEST:
+        res = xray_alive(cfg)
+        if res is False:
+            return False
+    return True
 
 
 def pick(configs, seen):
@@ -357,7 +426,6 @@ def pick(configs, seen):
             except Exception:
                 return False
 
-        # کاهش تعداد رشته‌ها به ۸ برای جلوگیری از خطای ریت‌لیمیت سرور تست
         with ThreadPoolExecutor(max_workers=8) as ex:
             results = list(ex.map(safe_ping, cands))
         return [c for c, p in zip(cands, results) if p]
@@ -390,37 +458,58 @@ def build_message(chosen):
             box = f"<blockquote expandable>{lines}</blockquote>"
         else:
             box = f"<pre>{lines}</pre>"
-        msg = f"🔐 کانفیگ‌های تست‌شده و سالم\n\n{box}\n\n{CHANNEL}"
+        msg = f"🔐 کانفیگ‌های جدید\n\n{box}\n\n{CHANNEL}"
         if len(msg) <= 4000 or len(chosen) <= 1:
             return msg
         chosen = chosen[:-1]
 
 
-def send(msg):
+def send(msg, reply_to_message_id=None):
+    payload = {
+        "chat_id": CHANNEL,
+        "text": msg,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
+    if reply_to_message_id:
+        payload["reply_parameters"] = json.dumps({"message_id": int(reply_to_message_id)})
+
     r = requests.post(
         f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        data={"chat_id": CHANNEL, "text": msg, "parse_mode": "HTML",
-              "disable_web_page_preview": True},
+        data=payload,
         timeout=30,
     )
     if not r.ok:
         print("Telegram error:", r.text)
-    return r.ok
+        return None
+    return r.json().get("result", {}).get("message_id")
 
 
 def run_once():
-    configs = fetch_telegram_channels()
+    # بررسی وضعیت کانفیگ‌های پست قبلی (در صورت وجود)
+    state = load_state()
+    last_msg_id = state.get("message_id")
+    last_configs = state.get("configs", [])
+    if last_msg_id and last_configs:
+        for prev_cfg in last_configs:
+            if is_full_alive(prev_cfg):
+                send("✅ متصل", reply_to_message_id=last_msg_id)
+                return "کانفیگ قبلی متصل بود؛ ریپلای «متصل» ارسال شد"
+
+    configs = fetch_configs()
     if not configs:
-        return "هیچ کانفیگی از کانال‌ها دریافت نشد"
+        return "هیچ کانفیگی پیدا نشد"
     seen = load_seen()
     chosen = pick(configs, seen)
     if not chosen:
-        return "کانفیگ سالمی یافت نشد؛ پیامی ارسال نشد"
-    if send(build_message(chosen)):
+        return "هیچ کانفیگ زنده‌ای پیدا نشد"
+    msg_id = send(build_message(chosen))
+    if msg_id:
         seen += [h(c) for c in chosen]
         save_seen(seen)
-        return f"{len(chosen)} کانفیگ با موفقیت ارسال شد"
-    return "ارسال پیام به تلگرام با خطا مواجه شد"
+        save_state({"message_id": msg_id, "configs": chosen})
+        return f"{len(chosen)} کانفیگ ارسال شد"
+    return "ارسال به تلگرام ناموفق بود"
 
 
 if __name__ == "__main__":
