@@ -2,8 +2,8 @@ name: Config Bot
 
 on:
   schedule:
-    - cron: "0 */3 * * *"   # هر ۳ ساعت یک‌بار
-  workflow_dispatch: {}     # امکان اجرای دستی از تب اکشنز
+    - cron: "0 */3 * * *"
+  workflow_dispatch: {}
 
 permissions:
   contents: write
