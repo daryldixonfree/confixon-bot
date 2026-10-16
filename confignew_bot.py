@@ -17,30 +17,40 @@ import requests
 # ================== تنظیمات ==================
 TOKEN = os.environ.get("BOT_TOKEN")
 CHANNEL = os.environ.get("CHANNEL_NAME")
-SOURCE_URLS = [u for u in (os.environ.get("BOT_SOURCE_URL_Y"), os.environ.get("BOT_SOURCE_URL_P")) if u]
+
+# لیست کانال‌های منبع تلگرام (بدون @)
+# می‌توانی مستقیماً در این لیست اضافه کنی یا از سکرت TELEGRAM_CHANNELS به صورت جدا شده با کاما بفرستی
+ENV_CHANNELS = os.environ.get("TELEGRAM_CHANNELS", "")
+if ENV_CHANNELS:
+    SOURCE_CHANNELS = [c.strip().lstrip("@") for c in ENV_CHANNELS.split(",") if c.strip()]
+else:
+    SOURCE_CHANNELS = [
+        "v2rayngvpn",
+        "customv2ray",
+        "free4allVPN",
+    ]
 
 TOTAL = 5
-EXCLUDE = {"🇮🇷"}         # کانفیگ‌های این پرچم‌ها هیچ‌وقت فرستاده نمی‌شن
-REBRAND = True            # آیدی کانال منبع تو اسم کانفیگ با CHANNEL عوض بشه
-PING_TEST = True          # لایه‌ی اول: از داخل ایران چک بشه پورت سرور باز هست یا نه (check-host.net)
+EXCLUDE = {"🇮🇷"}
+REBRAND = True
+PING_TEST = True
 PING_NODES = ["ir1.node.check-host.net", "ir3.node.check-host.net", "ir6.node.check-host.net"]
-PING_MIN_OK = 2           # حداقل چندتا از نودهای ایران باید وصل بشن
-PING_TIMEOUT = 15         # ثانیه، حداکثر انتظار برای نتیجه‌ی هر تست
-XRAY_TEST = True          # تست واقعی با خود xray (اتصال واقعی، نه فقط باز بودن پورت)
-XRAY_BIN = "./xray"       # مسیر فایل اجرایی xray (تو ورک‌فلو دانلود می‌شه)
-XRAY_TIMEOUT = 8          # ثانیه، حداکثر انتظار برای جواب گرفتن از پشت کانفیگ
+PING_MIN_OK = 2
+PING_TIMEOUT = 12
+XRAY_TEST = True
+XRAY_BIN = "./xray"
+XRAY_TIMEOUT = 8
 XRAY_TEST_URL = "https://web.telegram.org/"
-DEBUG = True              # جزئیات هر تست تو لاگ Actions چاپ بشه (بعد از رفع مشکل، False کن)
-XRAY_MAX_TEST = 40        # حداکثر چند کانفیگ رو با xray تست کنه (برای محدود کردن زمان اجرا)
+DEBUG = True
+XRAY_MAX_TEST = 35
 USE_QUOTE = False
 SEEN_FILE = "seen.json"
-MAX_SEEN = 500
+MAX_SEEN = 600
 # ============================================
 
-CFG_RE = re.compile(r"\b(?:vmess|vless|trojan|ss|hysteria2|hy2|tuic)://[^\r\n<>\"']+")
+CFG_RE = re.compile(r"\b(?:vmess|vless|trojan|ss|hysteria2|hy2|tuic)://[^\r\n<>\"'\s]+")
 FLAG_RE = re.compile(r"[\U0001F1E6-\U0001F1FF]{2}")
 TAG_RE = re.compile(r"@[A-Za-z0-9_]{4,}")
-# همه‌ی ایموجی‌ها و نمادها به‌جز پرچم کشورها (U+1F1E6 تا U+1F1FF)
 EMOJI_RE = re.compile(
     "[\U0001F000-\U0001F1E5\U0001F200-\U0001FAFF\u2190-\u21FF\u2300-\u23FF"
     "\u2600-\u27BF\u2B00-\u2BFF\u00A9\u00AE\u2122\u200D\uFE0F\u20E3]"
@@ -71,28 +81,32 @@ def h(cfg):
     return hashlib.md5(cfg.encode()).hexdigest()
 
 
-def fetch_configs():
-    for url in SOURCE_URLS:
+def fetch_telegram_channels():
+    found_configs = []
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+    for ch in SOURCE_CHANNELS:
+        url = f"https://t.me/s/{ch}"
         try:
-            r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+            r = requests.get(url, headers=headers, timeout=15)
+            if not r.ok:
+                continue
             text = html.unescape(r.text)
-            found = CFG_RE.findall(text)
-            if not found:
-                try:
-                    raw = re.sub(r"\s+", "", text)
-                    found = CFG_RE.findall(b64d(raw).decode("utf-8", "ignore"))
-                except Exception:
-                    found = []
-            found = [c.strip() for c in found]
-            if found:
-                return list(dict.fromkeys(found))
-        except Exception:
+            matches = CFG_RE.findall(text)
+            for m in matches:
+                clean_m = m.strip()
+                if clean_m:
+                    found_configs.append(clean_m)
+        except Exception as e:
+            if DEBUG:
+                print(f"[خطا در کانال {ch}]: {e}")
             continue
-    return []
+
+    # حذف تکراری‌ها در حین حفظ ترتیب جدیدترین‌ها
+    return list(dict.fromkeys(found_configs))
 
 
 def get_flag(cfg):
-    """پرچم کشور رو از اسم کانفیگ درمیاره."""
     label = ""
     if cfg.startswith("vmess://"):
         try:
@@ -106,7 +120,6 @@ def get_flag(cfg):
 
 
 def clean_label(label):
-    """ایموجی‌ها رو (به‌جز پرچم) برمی‌داره و آیدی کانال خودت رو تو اسم می‌ذاره."""
     if REBRAND:
         if TAG_RE.search(label):
             label = TAG_RE.sub(lambda m: CHANNEL, label)
@@ -155,10 +168,6 @@ def get_host_port(cfg):
 
 
 def tcp_ping(cfg):
-    """True اگه از حداقل PING_MIN_OK تا از نودهای ایرانی check-host.net
-    بشه به پورت سرور وصل شد؛ این چیزیه که مرحله‌ی گیت‌هاب-به-خودش نمی‌تونه
-    نشون بده، چون فیلترینگ ایران رو خود گیت‌هاب حس نمی‌کنه.
-    پروتکل‌های UDP قابل تست نیستن و بدون تست قبول می‌شن."""
     if UDP_RE.search(cfg):
         return True
     hp = get_host_port(cfg)
@@ -213,9 +222,6 @@ def _free_port():
 
 
 def cfg_to_xray_outbound(cfg):
-    """کانفیگ رو به فرمت outbound خود xray تبدیل می‌کنه. اگه پروتکل یا نوع
-    شبکه‌ش پشتیبانی نشه (مثل ss یا xhttp/kcp)، None برمی‌گردونه، و اون‌وقت
-    فقط به همون تست پورت (tcp_ping) بسنده می‌کنیم."""
     scheme, rest = cfg.split("://", 1)
     body = rest.split("#", 1)[0]
 
@@ -248,7 +254,7 @@ def cfg_to_xray_outbound(cfg):
             return None
 
     if scheme not in ("vless", "trojan"):
-        return None  # ss و بقیه فعلاً پشتیبانی نمی‌شن
+        return None
 
     try:
         userinfo, hostpart = body.split("@", 1)
@@ -267,7 +273,7 @@ def cfg_to_xray_outbound(cfg):
     elif net == "grpc":
         stream["grpcSettings"] = {"serviceName": q.get("serviceName") or q.get("path") or ""}
     elif net != "tcp":
-        return None  # xhttp/kcp/quic فعلاً پشتیبانی نمی‌شن
+        return None
 
     security = q.get("security", "none")
     if security == "tls":
@@ -294,8 +300,6 @@ def cfg_to_xray_outbound(cfg):
 
 
 def xray_alive(cfg):
-    """True اگه xray واقعاً بتونه از پشت این کانفیگ یه سایت رو باز کنه.
-    None اگه پروتکلش پشتیبانی نشه (تا با تست پورت جایگزینش کنیم)."""
     outbound = cfg_to_xray_outbound(cfg)
     if outbound is None:
         return None
@@ -314,22 +318,16 @@ def xray_alive(cfg):
             json.dump(xray_cfg, f)
         proc = subprocess.Popen([XRAY_BIN, "run", "-c", path],
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        time.sleep(0.7)  # فرصت بالا اومدن xray
+        time.sleep(0.7)
         if proc.poll() is not None:
-            if DEBUG:
-                print(f"[دیباگ] {tag}: خود xray بالا نیومد -> {proc.stdout.read()[:1500]}")
             return False
         r = requests.get(
             XRAY_TEST_URL,
             proxies={"http": f"socks5h://127.0.0.1:{port}", "https": f"socks5h://127.0.0.1:{port}"},
             timeout=XRAY_TIMEOUT,
         )
-        if DEBUG:
-            print(f"[دیباگ] {tag}: کد جواب = {r.status_code}")
         return r.status_code < 400
     except Exception as e:
-        if DEBUG:
-            print(f"[دیباگ] {tag}: خطا -> {type(e).__name__}: {e}")
         return False
     finally:
         if proc:
@@ -347,7 +345,6 @@ def xray_alive(cfg):
 def pick(configs, seen):
     seen_set = set(seen)
     configs = [c for c in configs if get_flag(c) not in EXCLUDE]
-    # اول کانفیگ‌های نفرستاده‌شده، بعد بقیه؛ داخل هر دسته تصادفی
     ordered = sorted(configs, key=lambda c: (h(c) in seen_set, random.random()))
 
     def port_alive(cands):
@@ -360,7 +357,8 @@ def pick(configs, seen):
             except Exception:
                 return False
 
-        with ThreadPoolExecutor(max_workers=32) as ex:
+        # کاهش تعداد رشته‌ها به ۸ برای جلوگیری از خطای ریت‌لیمیت سرور تست
+        with ThreadPoolExecutor(max_workers=8) as ex:
             results = list(ex.map(safe_ping, cands))
         return [c for c, p in zip(cands, results) if p]
 
@@ -368,7 +366,7 @@ def pick(configs, seen):
     xray_tested = 0
     rest = ordered
     while len(chosen) < TOTAL and rest:
-        chunk, rest = rest[:20], rest[20:]
+        chunk, rest = rest[:15], rest[15:]
         for c in port_alive(chunk):
             if len(chosen) >= TOTAL:
                 break
@@ -380,7 +378,7 @@ def pick(configs, seen):
                 result = xray_alive(c)
             except Exception:
                 result = False
-            if result is not False:  # True یا None (پروتکل پشتیبانی‌نشده) قبول می‌شه
+            if result is not False:
                 chosen.append(c)
     return chosen[:TOTAL]
 
@@ -392,7 +390,7 @@ def build_message(chosen):
             box = f"<blockquote expandable>{lines}</blockquote>"
         else:
             box = f"<pre>{lines}</pre>"
-        msg = f"🔐 کانفیگ‌های جدید\n\n{box}\n\n{CHANNEL}"
+        msg = f"🔐 کانفیگ‌های تست‌شده و سالم\n\n{box}\n\n{CHANNEL}"
         if len(msg) <= 4000 or len(chosen) <= 1:
             return msg
         chosen = chosen[:-1]
@@ -411,18 +409,18 @@ def send(msg):
 
 
 def run_once():
-    configs = fetch_configs()
+    configs = fetch_telegram_channels()
     if not configs:
-        return "هیچ کانفیگی پیدا نشد"
+        return "هیچ کانفیگی از کانال‌ها دریافت نشد"
     seen = load_seen()
     chosen = pick(configs, seen)
     if not chosen:
-        return "هیچ کانفیگ زنده‌ای پیدا نشد"
+        return "کانفیگ سالمی یافت نشد؛ پیامی ارسال نشد"
     if send(build_message(chosen)):
         seen += [h(c) for c in chosen]
         save_seen(seen)
-        return f"{len(chosen)} کانفیگ ارسال شد"
-    return "ارسال به تلگرام ناموفق بود"
+        return f"{len(chosen)} کانفیگ با موفقیت ارسال شد"
+    return "ارسال پیام به تلگرام با خطا مواجه شد"
 
 
 if __name__ == "__main__":
