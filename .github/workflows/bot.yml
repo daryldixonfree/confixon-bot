@@ -2,11 +2,11 @@ name: Config Bot
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # هر ۳۰ دقیقه
-  workflow_dispatch: {}       # اجرای دستی از تب Actions برای تست
+    - cron: "0 */3 * * *"   # هر ۳ ساعت یک‌بار
+  workflow_dispatch: {}     # امکان اجرای دستی از تب اکشنز
 
 permissions:
-  contents: write            # برای ذخیره‌ی seen.json داخل مخزن
+  contents: write
 
 jobs:
   run-bot:
@@ -33,8 +33,7 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
-          BOT_SOURCE_URL_Y: ${{ secrets.BOT_SOURCE_URL_Y }}
-          BOT_SOURCE_URL_P: ${{ secrets.BOT_SOURCE_URL_P }}
+          TELEGRAM_CHANNELS: ${{ secrets.TELEGRAM_CHANNELS }}
         run: python confignew_bot.py
 
       - name: Save seen.json
