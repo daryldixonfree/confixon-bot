@@ -1,11 +1,8 @@
 {
-  "message_id": 738,
+  "message_id": 740,
   "configs": [
-    "vless://90157e25-cee1-4217-921e-91f300bc1a24@89.105.218.138:443?&security=reality&flow=xtls-rprx-vision&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&sid=428ef87fd47a3a32&fp=firefox&sni=golos.mail.ru&type=tcp&headerType=none&host=golos.mail.ru&path=%2F#%40filembad",
-    "vless://2cb6a5d1-0165-4bc2-aff2-832672160c56@85.202.192.131:34033?encryption=none&flow=xtls-rprx-vision&type=tcp&security=reality&sni=splitter.wb.ru&fp=safari&pbk=I7s_V_6XHD2As0H5Ok2GV2a2M7o9RDCrH2USpCZPy0A&sid=a1fdf7b7bebade41&spx=/HesarWeb#%40filembad",
-    "vless://e60f89d9-ea22-4db0-aaa5-508d39fd87ea@185.203.4.97:24009?security=reality&encryption=none&pbk=FRrmnh-6aZBPg6zdxiS3VPuS2uW2w2kfq_oHBf4iiU8&fp=chrome&spx=/4763731c28d5fe2&type=grpc&sni=it.nvidia.com&sid=5b7222#%40filembad",
-    "vless://90157e25-cee1-4217-921e-91f300bc1a24@50.7.227.77:443?security=reality&encryption=none&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&headerType=none&fp=firefox&type=tcp&sni=bizorg.su&sid=428ef87fd47a3a32&insecure=0&flow=xtls-rprx-vision#%40filembad",
-    "vless://2cb6a5d1-0165-4bc2-aff2-832672160c56@85.202.192.131:34033?security=reality&encryption=none&pbk=I7s_V_6XHD2As0H5Ok2GV2a2M7o9RDCrH2USpCZPy0A&headerType=none&fp=safari&type=tcp&flow=xtls-rprx-vision&sni=splitter.wb.ru&sid=a1fdf7b7bebade41#%40filembad"
+    "vless://8a5f76b3-dcce-4cbe-94b0-80cbe42b374e@168.222.43.229:39529?security=reality&encryption=none&pbk=hnTja7cyq2qDPZ8VTYdKCiC86isYlAFfe7e8-UM0ICw&headerType=none&fp=chrome&spx=%2F28da26468767be8&type=tcp&sni=eventadm.semiconductor.samsung.com&sid=8eeb693e87#%40filembad",
+    "vless://6ba2eac6-0ec9-44ca-a42b-a8e23aafb530@3.0.70.13:1114?security=reality&encryption=none&pbk=WfkCF0eEuIoO0MyJsKOddU89QrTzCZ4y2dzCJbH99CQ&headerType=none&fp=firefox&type=tcp&flow=xtls-rprx-vision&sni=yahoo.com&sid=79a1e14b#%40filembad"
   ],
-  "timestamp": 1794086736
+  "timestamp": 1794142013
 }
