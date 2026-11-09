@@ -1,11 +1,11 @@
 {
-  "message_id": 743,
+  "message_id": 744,
   "configs": [
-    "vless://dd5bed0b-ee77-481b-9f2c-250a632ddd9f@185.189.45.195:443?security=reality&encryption=none&pbk=BIy6H-jndn24Ukyw83ML8LDB1HL8WLJmfCADEy8lzVs&headerType=none&fp=firefox&type=tcp&flow=xtls-rprx-vision&sni=get.jarbook.net&sid=c6f97313#%40filembad",
-    "vless://My-chanel-Telegram-ATOVPN@217.179.5.241:38272?security=reality&encryption=none&pbk=GhqmOHRlqY0BAmDHPXmXi3t56rijvnZN0Ax-pGVVBHc&headerType=none&fp=chrome&spx=%2Fbe23d020ca6fce6&type=tcp&sni=www-ams.samsung.com&sid=5a4f5a#%40filembad",
-    "vless://90559189-7899-4f25-a6ba-1f9057f9e901@mw-ru3.star1905.org:443?security=reality&encryption=none&pbk=IEldBmyWyqLROTIsxi8SDphC6cMxp1Pah2sx-5-Wyic&headerType=none&type=tcp&flow=xtls-rprx-vision&sni=mw-ru3.star1905.org&sid=0dd58a731e35d0c8#%40filembad",
-    "vless://b4e69d67-9d41-417c-b465-ebf1591fb792@93.95.226.159:28150?security=reality&encryption=none&pbk=KQW_o2BlCjMC8aH5lkNkO_rmMCAUykQIQCCIIehhsAo&headerType=none&fp=firefox&type=tcp&sni=google.com&sid=06#%40filembad",
-    "vless://6db6b948-655f-4f68-a9e7-865050e05b31@93.152.215.254:443?security=reality&encryption=none&pbk=is-86tEDOjNbNAnVwc-YHHYSn1MF9SF68P6VjESfDHQ&host=%2F%3FTelegram---%40pirozi_ArGaP---%40pirozi_ArGaP---%40pirozi_ArGaP---%40pirozi_ArGaP&headerType=none&fp=ios&type=tcp&flow=xtls-rprx-vision&sni=remote.propaint.cl&sid=a2fcac#%40filembad"
+    "vless://49245416-d794-4db9-8141-0b60724005f7@46.8.100.46:35940?security=none&encryption=mlkem768x25519plus.native.0rtt.spOcMb4TcY-s4MzXQMKEcZqSV2up9RdToAdSmpU7zAQ&headerType=none&type=tcp#%40filembad",
+    "vless://c8c2ddff-825a-46c3-bbdd-4a101de468a7@188.130.209.212:443?security=reality&encryption=none&pbk=6vubZmkLVtaiFF8JyGFy7XSy2pc7ywN4P625QLKw8wc&host=%2F%3FTELEGRAM---MARAMBASHI---MARAMBASHI---MARAMBASHI---MARAMBASHI&headerType=none&fp=qq&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=thumbs.mycdn-io.ru&sid=11979c0c9b2da371#%40filembad",
+    "vless://dd5bed0b-ee77-481b-9f2c-250a632ddd9f@185.189.45.195:443?encryption=none&type=tcp&security=reality&headerType=none&sni=get.jarbook.net&fp=firefox&pbk=BIy6H-jndn24Ukyw83ML8LDB1HL8WLJmfCADEy8lzVs&sid=c6f97313&spx=%2F&flow=xtls-rprx-vision#%40filembad",
+    "vless://90157e25-cee1-4217-921e-91f300bc1a24@185.215.184.49:443?security=reality&encryption=none&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=dvizhok.su&sid=428ef87fd47a3a32#%40filembad",
+    "vless://dd5bed0b-ee77-481b-9f2c-250a632ddd9f@185.189.45.195:443?security=reality&encryption=none&pbk=BIy6H-jndn24Ukyw83ML8LDB1HL8WLJmfCADEy8lzVs&headerType=none&fp=firefox&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=get.jarbook.net&sid=c6f97313#%40filembad"
   ],
-  "timestamp": 1794221583
+  "timestamp": 1794261305
 }
