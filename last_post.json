@@ -1,11 +1,11 @@
 {
-  "message_id": 751,
+  "message_id": 753,
   "configs": [
-    "vless://3659f248-1797-4d6e-9982-a308565fec79@95.85.234.66:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=fl-modx.webedg.net&fp=firefox&pbk=MuQH546CBdgYVBzNU_F5fimkbQ0srHxgLKDjl1Wz2Rw&sid=00000000&type=tcp&headerType=none#%40filembad",
-    "vless://b81b4d1b-7f20-48f1-82dc-d24bef898cab@161.97.160.224:443?security=reality&encryption=none&pbk=33zaT3jHXjtynSQ0Ucw9bK92-XH2zolJmuIeZ1XyZB0&headerType=none&type=tcp&flow=xtls-rprx-vision&sni=passport.yandex.ru&sid=e6#%40filembad",
-    "vmess://eyJhZGQiOiI2Ny4yMjAuOTUuMyIsImFpZCI6IjAiLCJhbHBuIjoiIiwiYmF0Y2giOiIiLCJlY2hDb25maWdMaXN0IjoiIiwiZWNoU2VydmVyS2V5cyI6IiIsImZha2Vob3N0X2RvbWFpbiI6IiIsImZwIjoiIiwiaG9zdCI6IiIsImlkIjoiZjhjOGRjM2QtMGQzNy00NmIwLThiMzQtYTcyMzI4ODJmY2ZlIiwiaW50ZXJ2YWwiOiIiLCJsZW5ndGgiOiIiLCJtdXgiOiIiLCJtdXhDb25jdXJyZW5jeSI6IiIsIm5ldCI6InRjcCIsInBhY2tldHMiOiIiLCJwYXRoIjoiIiwicG9ydCI6IjE4MDAwIiwicHMiOiJAZmlsZW1iYWQiLCJzY3kiOiJub25lIiwic25pIjoiIiwidGxzIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIsInhodHRwX2V4dHJhIjoiIn0=",
-    "vmess://eyJhZGQiOiIxNjkuMTk3LjE0Mi4yMiIsImhvc3QiOiIiLCJpZCI6ImY4YzhkYzNkLTBkMzctNDZiMC04YjM0LWE3MjMyODgyZmNmZSIsIm5ldCI6InRjcCIsInBhdGgiOiIiLCJwb3J0IjoiMTgwMDAiLCJwcyI6IkBmaWxlbWJhZCIsInNjeSI6ImF1dG8iLCJ0eXBlIjoibm9uZSJ9",
-    "vmess://eyJhZGQiOiI2Ny4yMjAuOTUuMyIsImFpZCI6IjAiLCJob3N0IjoiIiwiaWQiOiJmOGM4ZGMzZC0wZDM3LTQ2YjAtOGIzNC1hNzIzMjg4MmZjZmUiLCJuZXQiOiJ0Y3AiLCJwYXRoIjoiIiwicG9ydCI6MTgwMDAsInBzIjoiQGZpbGVtYmFkIiwic2N5IjoiYXV0byIsInNuaSI6IiIsInRscyI6ImF1dG8iLCJ0eXBlIjoibm9uZSIsInYiOiIyIiwibmFtZSI6IjRNb2hzZW4tMDA2NWZlNzk1MCJ9"
+    "vmess://eyJhZGQiOiI2Ny4yMjAuOTUuMyIsImFpZCI6IjAiLCJhbHBuIjoiIiwiZnAiOiIiLCJob3N0IjoiIiwiaWQiOiJmOGM4ZGMzZC0wZDM3LTQ2YjAtOGIzNC1hNzIzMjg4MmZjZmUiLCJpbnNlY3VyZSI6IjAiLCJuZXQiOiJ0Y3AiLCJwYXRoIjoiIiwicGNzIjoiIiwicG9ydCI6IjE4MDAwIiwicHMiOiJAZmlsZW1iYWQiLCJzY3kiOiJhdXRvIiwic25pIjoiIiwidGxzIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIsInZjbiI6IiJ9",
+    "vless://af482a1c-8b12-4f61-af77-a9e5fe5336bc@109.70.74.20:50540?security=reality&encryption=none&pbk=e1k9SFW-FuDzb8X72L9dQQtuyLnQmoWdN8NXyVqVp2k&headerType=none&fp=chrome&spx=%2F8c7d8642edb8ac7&type=tcp&sni=eventadm.semiconductor.samsung.com&sid=cbe1db1dd92820#%40filembad",
+    "vless://90157e25-cee1-4217-921e-91f300bc1a24@ee.subv.ru:443?security=reality&encryption=none&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&headerType=none&fp=firefox&type=tcp&flow=xtls-rprx-vision&sni=dvizhok.su&sid=428ef87fd47a3a32&host=/%3FTelegram---PLANB_NET---PLANB_NET---PLANB_NET---PLANB_NET#%40filembad",
+    "vless://140d6fc9-2c6d-41bd-a487-182b52c0184f@45.61.186.3:443?encryption=none&flow=xtls-rprx-vision&type=tcp&security=reality&sni=caissuers.microsoft.com&fp=chrome&pbk=rA1BaV8FUcTMs25jXCZkUV3DG0-NQEFmvVHdPlUXAHI&sid=d898752d58acbfe0#%40filembad",
+    "vless://90157e25-cee1-4217-921e-91f300bc1a24@ee.subv.ru:443?security=reality&encryption=none&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=dvizhok.su&sid=428ef87fd47a3a32#%40filembad"
   ],
-  "timestamp": 1794461789
+  "timestamp": 1794519856
 }
