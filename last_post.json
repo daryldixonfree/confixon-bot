@@ -1,11 +1,11 @@
 {
-  "message_id": 753,
+  "message_id": 755,
   "configs": [
-    "vmess://eyJhZGQiOiI2Ny4yMjAuOTUuMyIsImFpZCI6IjAiLCJhbHBuIjoiIiwiZnAiOiIiLCJob3N0IjoiIiwiaWQiOiJmOGM4ZGMzZC0wZDM3LTQ2YjAtOGIzNC1hNzIzMjg4MmZjZmUiLCJpbnNlY3VyZSI6IjAiLCJuZXQiOiJ0Y3AiLCJwYXRoIjoiIiwicGNzIjoiIiwicG9ydCI6IjE4MDAwIiwicHMiOiJAZmlsZW1iYWQiLCJzY3kiOiJhdXRvIiwic25pIjoiIiwidGxzIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIsInZjbiI6IiJ9",
-    "vless://af482a1c-8b12-4f61-af77-a9e5fe5336bc@109.70.74.20:50540?security=reality&encryption=none&pbk=e1k9SFW-FuDzb8X72L9dQQtuyLnQmoWdN8NXyVqVp2k&headerType=none&fp=chrome&spx=%2F8c7d8642edb8ac7&type=tcp&sni=eventadm.semiconductor.samsung.com&sid=cbe1db1dd92820#%40filembad",
-    "vless://90157e25-cee1-4217-921e-91f300bc1a24@ee.subv.ru:443?security=reality&encryption=none&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&headerType=none&fp=firefox&type=tcp&flow=xtls-rprx-vision&sni=dvizhok.su&sid=428ef87fd47a3a32&host=/%3FTelegram---PLANB_NET---PLANB_NET---PLANB_NET---PLANB_NET#%40filembad",
-    "vless://140d6fc9-2c6d-41bd-a487-182b52c0184f@45.61.186.3:443?encryption=none&flow=xtls-rprx-vision&type=tcp&security=reality&sni=caissuers.microsoft.com&fp=chrome&pbk=rA1BaV8FUcTMs25jXCZkUV3DG0-NQEFmvVHdPlUXAHI&sid=d898752d58acbfe0#%40filembad",
-    "vless://90157e25-cee1-4217-921e-91f300bc1a24@ee.subv.ru:443?security=reality&encryption=none&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=dvizhok.su&sid=428ef87fd47a3a32#%40filembad"
+    "vless://1bde5f41-f235-482f-8d05-b9e8b21cfe42@Ir.mamad.web.tr:58336?security=reality&encryption=mlkem768x25519plus.native.0rtt.Y5nLdmocDwq2WjH6kcFkl5zVoPxg-Y9rL2xJ2iz_BwI&pbk=0-Lz5hw7uv9pfGdw_PX9C-H4euFb5vY6KKylQBhB8Rg&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=aws.amazon.com&sid=19386c76f700ed04#%40filembad",
+    "vless://664f65f4-33b3-43a3-b9e5-68192d1d428e@200.102.180.37:8443?security=reality&encryption=none&pbk=bGwVs-Re6vNB1tuKqZZ209x7l361FxZdtPHg0yZLa2Q&host=%2F%3FTELEGRAM---MARAMBASHI---MARAMBASHI---MARAMBASHI---MARAMBASHI&headerType=none&fp=firefox&type=tcp&flow=xtls-rprx-vision&sni=juniper-canyon.cdn.cachefleet.com&sid=63c4425dacae86cb#%40filembad",
+    "vmess://eyJhZGQiOiI2Ny4yMjAuOTUuMyIsImFpZCI6IjAiLCJhbHBuIjoiIiwiZnAiOiIiLCJob3N0IjoiIiwiaWQiOiJmOGM4ZGMzZC0wZDM3LTQ2YjAtOGIzNC1hNzIzMjg4MmZjZmUiLCJpbnNlY3VyZSI6IjAiLCJuZXQiOiJ0Y3AiLCJwYXRoIjoiIiwicG9ydCI6IjE4MDAwIiwicHMiOiJAZmlsZW1iYWQiLCJzY3kiOiJhdXRvIiwic25pIjoiIiwidGxzIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiJ9",
+    "vless://fa081e9f-7574-4e18-8928-31aa5ac923c7@94.177.253.26:443?flow=xtls-rprx-vision&security=reality&sni=uk7.sbcweb.net&fp=firefox&pbk=drl7nndYdfzZY1aQ0eUAWmNV0nsHig2uDnu9siy9biQ&sid=868419504747f6de#%40filembad",
+    "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@15.204.97.198:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&host=/?TELEGRAM---MARAMBASHI---MARAMBASHI---MARAMBASHI---MARAMBASHI&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%40filembad"
   ],
-  "timestamp": 1794519856
+  "timestamp": 1794577983
 }
